@@ -1,55 +1,61 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\User;
 
-use App\Models\User;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Auth; // Correct import
+use App\Http\Controllers\Controller;
+use App\Http\Requests\User\ProfileUpdateRequest;
+use App\Http\Resources\User\UserResource;
+use App\Interfaces\User\ProfileInterface;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
-class UserController extends Controller
+class ProfileController extends Controller
 {
-    public function getProfile()
+
+
+    public function __construct(protected ProfileInterface $profileInterface) {}
+
+    public function showProfile()
     {
         // $user = Auth::user(); 
 
-        // Alternatively you could use:
-        $user = auth('sanctum')->user(); // إذا كنت تستخدم Sanctum
+        // $user = auth('sanctum')->user();
+
+        $user = $this->profileInterface->getUser();
 
         if (!$user) {
             return response()->json(['message' => 'User Not Found'], 404);
         }
-
-        $userData = [
-            'name' => $user->name,
-            'email' => $user->email,
-            'phone_number' => $user->phone_number,
-            'password' => $user->password,
-            'created_at' => $user->created_at,
+        return [
+            'profile' => new UserResource($user)
         ];
-
-        return response()->json(['user' => $userData]);
     }
 
-
-    public function updateProfile(Request $request)
+    public function updateProfile(ProfileUpdateRequest $request)
     {
-        /** @var \App\Models\User $user */
-        $user = Auth::user();
 
-        $user->update([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => bcrypt($request->password),
+        // $user = $this->profileInterface->getUser();
+        $data = $request->only([
+            'name',
+            'email',
+            'password',
+            'phone_number',
         ]);
+
+        // if ($request->filled('password')) {
+        //     $data['password'] = bcrypt($request->password);
+        // }
+
+        // $user->update($data);
+
+        $this->profileInterface->update($data);
 
         return response()->json(['message' => 'Profile updated successfully']);
     }
 
-
     public function getNotifications()
     {
-        $notifications = Auth::user()->notifications()->whereNull('read_at')->latest()->get();
+        $notifications = $this->profileInterface->getNotifications();
 
         return response()->json($notifications);
     }

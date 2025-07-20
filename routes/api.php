@@ -1,17 +1,15 @@
 <?php
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\AuthController;
+use App\Http\Controllers\Authentication\AuthController;
 use App\Http\Controllers\CarouselImagesController;
 use App\Http\Controllers\CategoriesController;
-use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CouponController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductsController;
-use App\Http\Controllers\UserController;
-use App\Models\Order;
-use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
+use App\Http\Controllers\User\ProfileController;
+use App\Http\Controllers\User\UserOrderController;
+use App\Http\Controllers\Admin\AdminOrderController;
 
 /*
 |--------------------------------------------------------------------------
@@ -19,98 +17,103 @@ use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
 |--------------------------------------------------------------------------
 */
 
-Route::post('/login', [AuthController::class, 'login']);
-Route::post('/sign-up', [AuthController::class, 'SendOTP']);
-Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);
+Route::controller(AuthController::class)->group(function () {
+    Route::post('/login', 'login');
+    Route::post('/sign-up', 'requestOtp');
+    Route::post('/verify-otp', 'verifyOtp');
+});
 
-Route::get('/getCarouselImages', [CarouselImagesController::class, 'getCarouselImages']);
-Route::get('/categories', [CategoriesController::class, 'categories']);
-Route::get('/products', [ProductsController::class, 'getproducts']);
-Route::get('/products/{id}', [ProductsController::class, 'getproductById']);
-Route::get('/categories/{categoryId}/products', [ProductsController::class, 'getproductByCategoryId']);
+Route::controller(CarouselImagesController::class)->group(function () {
+    Route::get('/getCarouselImages', 'getCarouselImages');
+});
+
+Route::prefix('categories')->controller(CategoriesController::class)->group(function () {
+    Route::get('/', 'categories');
+    Route::get('/{categoryId}/products', [ProductsController::class, 'getproductByCategoryId']);
+});
+
+Route::prefix('products')->controller(ProductsController::class)->group(function () {
+    Route::get('/', 'getproducts');
+    Route::get('/{id}', 'getproductById');
+});
+
 Route::get('/all-categories-products', [ProductsController::class, 'getAllCategoriesWithProducts']);
 
 
-
 /*
 |--------------------------------------------------------------------------
-| Protected Routes (تحتاج تسجيل دخول للمستخدم العادي)
+| User Routes (تحتاج تسجيل دخول)
 |--------------------------------------------------------------------------
 */
-Route::middleware([EnsureFrontendRequestsAreStateful::class, 'auth:sanctum'])->group(function () {
-    // استعراض بيانات المستخدم
-    Route::get('/user', function (Request $request) {
-        return response()->json([
-            'message' => 'Authenticated',
-            'user' => $request->user()
-        ]);
+Route::middleware(['auth:sanctum'])->group(function () {
+
+    Route::controller(ProfileController::class)->group(function () {
+        Route::get('/profile', 'showProfile');
+        Route::put('/profile', 'updateProfile');
+
+        Route::prefix('notifications')->group(function () {
+            Route::get('/', 'getNotifications');
+            Route::post('/{notificationId}/mark-as-read', 'markAsRead');
+            Route::post('/mark-all-as-read', 'markAllAsRead');
+        });
     });
 
-    // البروفايل
-    Route::post('/profile', [UserController::class, 'getProfile']);
-    Route::put('/update/profile', [UserController::class, 'updateProfile']);
-
-    // الكوبونات
     Route::post('/applyCoupon', [CouponController::class, 'applyCoupon']);
 
-    // الطلبات
-    Route::post('/orders', [OrderController::class, 'placeOrder']);
-    Route::get('/orders', [OrderController::class, 'index']);
-    Route::get('/orders/{id}', [OrderController::class, 'show']);
-
-    // الاشعارات
-    Route::get('/notifications', [UserController::class, 'getNotifications']);
-    Route::post('/notifications/{notificationId}/mark-as-read', [UserController::class, 'markAsRead']);
-    Route::post('/notifications/mark-all-as-read', [UserController::class, 'markAllAsRead']);
+    Route::prefix('orders')->controller(UserOrderController::class)->group(function () {
+        Route::post('/', 'placeOrder');
+        Route::get('/', 'index');
+        Route::get('/{id}', 'show');
+    });
 });
+
 
 /*
 |--------------------------------------------------------------------------
-| Admin Routes (تحتاج تسجيل دخول + role = admin)
+| Admin Routes (تحتاج تسجيل دخول + تحقق من isAdmin)
 |--------------------------------------------------------------------------
 */
+Route::prefix('admin')->middleware(['auth:sanctum', 'isAdmin'])->group(function () {
 
-
-Route::middleware([EnsureFrontendRequestsAreStateful::class, 'auth:sanctum', 'isAdmin'])->prefix('admin')->group(function () {
-    //
-    Route::prefix('products')->group(function () {
-        Route::get('/', [ProductsController::class, 'index']);
-        Route::post('/add', [ProductsController::class, 'store']);
-        Route::put('/{product}', [ProductsController::class, 'update']);
-        Route::delete('/{product}', [ProductsController::class, 'destroy']);
+    Route::prefix('products')->controller(ProductsController::class)->group(function () {
+        Route::get('/', 'index');
+        Route::post('/add', 'store');
+        Route::put('/{product}', 'update');
+        Route::delete('/{product}', 'destroy');
     });
 
-    Route::prefix('categories')->group(function () {
-        Route::get('/', [CategoriesController::class, 'index']);
-        Route::post('/', [CategoriesController::class, 'store']);
-        Route::get('/{id}', [CategoriesController::class, 'getCategory']);
-        Route::post('/subcategories', [CategoriesController::class, 'storeSubCategory']);
-        Route::get('/subcategories/{id}', [CategoriesController::class, 'GetSubCategories']);
-        Route::delete('/subcategory/{id}', [CategoriesController::class, 'destroySubCategory']); // خلي دي قبل /{id}
-        Route::put('update/{id}', [CategoriesController::class, 'update']);
-        Route::delete('/{id}', [CategoriesController::class, 'destroy']);
-        Route::delete('/carouselImage/{id}', [CategoriesController::class, 'deleteCarouselImage']);
+    Route::prefix('categories')->controller(CategoriesController::class)->group(function () {
+        Route::get('/', 'index');
+        Route::post('/', 'store');
+        Route::get('/{id}', 'getCategory');
+        Route::post('/subcategories', 'storeSubCategory');
+        Route::get('/subcategories/{id}', 'GetSubCategories');
+        Route::delete('/subcategory/{id}', 'destroySubCategory');
+        Route::put('/update/{id}', 'update');
+        Route::delete('/{id}', 'destroy');
+        Route::delete('/carouselImage/{id}', 'deleteCarouselImage');
     });
 
-    Route::prefix('orders')->group(function () {
-        Route::get('/', [OrderController::class, 'getAllOrders']);
-        Route::get('/pending', [OrderController::class, 'getPendingOrders']);
-        Route::get('/{id}', [OrderController::class, 'getOrder']);
-        Route::put('/{id}/status/update', [OrderController::class, 'updateOrderStatus']);
+    Route::prefix('orders')->controller(AdminOrderController::class)->group(function () {
+        Route::get('/', 'getAllOrders');
+        Route::get('/pending', 'getPendingOrders');
+        Route::get('/{id}', 'getOrder');
+        Route::put('/{id}/status/update', 'updateOrderStatus');
     });
 
-
-    Route::prefix('coupons')->group(function () {
-        Route::get('index', [CouponController::class, 'index']);
-        Route::post('store', [CouponController::class, 'store']);
-        Route::put('update/{id}', [CouponController::class, 'update']);     // للتعديل
-        Route::delete('delete/{id}', [CouponController::class, 'destroy']); // للحذف
-        Route::patch('toggle/{id}', [CouponController::class, 'toggle']);   // لتغيير حالة التفعيل
+    Route::prefix('coupons')->controller(CouponController::class)->group(function () {
+        Route::get('/index', 'index');
+        Route::post('/store', 'store');
+        Route::put('/update/{id}', 'update');
+        Route::delete('/delete/{id}', 'destroy');
+        Route::patch('/toggle/{id}', 'toggle');
     });
 
-    Route::get('/revenue', [OrderController::class, 'getRevenue']);
-    // 
-    Route::post('/upload-images', [CarouselImagesController::class, 'store']);
-    Route::get('/images', [CarouselImagesController::class, 'index']);
-    Route::delete('/images/delete/{id}', [CarouselImagesController::class, 'destroy']);
+    Route::get('/revenue', [AdminOrderController::class, 'getRevenue']);
+
+    Route::prefix('images')->controller(CarouselImagesController::class)->group(function () {
+        Route::post('/upload', 'store');
+        Route::get('/', 'index');
+        Route::delete('/delete/{id}', 'destroy');
+    });
 });

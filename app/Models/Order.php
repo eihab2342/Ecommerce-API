@@ -2,10 +2,12 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Order extends Model
 {
+    use HasFactory;
     //
     protected $fillable = [
         'user_id',
@@ -23,20 +25,17 @@ class Order extends Model
         'billing_address',
         'comments',
         'ordered_at',
-        'created_at'
     ];
 
     protected $casts = [
         'extra_data' => 'array',
     ];
 
-    // علاقة مع المستخدم
     public function user()
     {
         return $this->belongsTo(User::class);
     }
 
-    // علاقة مع العناصر (المنتجات) داخل الطلب
     public function items()
     {
         return $this->hasMany(OrderItems::class);

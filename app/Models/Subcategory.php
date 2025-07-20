@@ -29,16 +29,6 @@ class Subcategory extends Model
     {
         return $this->hasMany(Products::class, 'subcategory_id');
     }
-
-
-    // في موديل Subcategory
-    // public function carouselImages()
-    // {
-    //     return $this->hasMany(carouselImages::class, 'subcategory_id');
-    // }
-
-
-    // في موديل Subcategory
     public function carouselImages()
     {
         return $this->hasMany(carouselImages::class, 'subcategory_id')
