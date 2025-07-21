@@ -1,16 +1,18 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Admin\Store;
 
+use App\Http\Controllers\Controller;
 use App\Models\categories;
 use App\Models\products;
-use App\Models\Subcategory;
-use Cache;
+use App\Http\Requests\Store\ProductRequest;
+use App\Services\Store\ProductService;
 use Illuminate\Http\Request;
-use Log;
 
 class ProductsController extends Controller
 {
+
+    public function __construct(protected ProductService $productService){}
     /**
      * Display a listing of the resource.
      */
@@ -23,40 +25,16 @@ class ProductsController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(ProductRequest $request)
     {
-        $validatedData = $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'price' => 'required|numeric',
-            'old_price' => 'nullable|numeric',
-            'cost_price' => 'nullable|numeric',
-            'quantity' => 'nullable|integer',
-            'category_id' => 'required|exists:categories,id',
-            'subcategory_id' => 'nullable|exists:subcategories,id',
-            'images.*' => 'required|mimes:jpeg,png,jpg,gif,webp,avif|max:2048',
-        ]);
+        $validatedData = $request->validated();
+        $images = $request->file('images');
 
-        // 🟢 أنشئ المنتج أولًا
-        $product = products::create($validatedData);
-
-        // 🟢 بعد إنشاء المنتج، احفظ الصور
-        if ($request->hasFile('images')) {
-            foreach ($request->file('images') as $key => $image) {
-                $imageName = uniqid() . '.' . $image->getClientOriginalExtension();
-                $image->storeAs('products', $imageName);
-
-                $product->images()->create([
-                    'images_path' => $imageName,
-                    'is_main' => $key === 0 ? 1 : 0,
-                ]);
-            }
-        }
+        $this->productService->create($validatedData, $images);
 
         return response()->json([
             'status' => 'success',
             'message' => 'تم إضافة المنتج بنجاح',
-            // 'data' => $product->load('images')
         ]);
     }
 
@@ -71,8 +49,8 @@ class ProductsController extends Controller
             // بقية الحقول
         ]);
 
-        $product = Products::findOrFail($id); // العثور على المنتج باستخدام الـ ID
-        $product->update($validatedData); // تحديث المنتج بالبيانات الجديدة
+        $product = Products::findOrFail($id); 
+        $product->update($validatedData);
 
         return response()->json([
             'status' => 'success',
@@ -85,9 +63,7 @@ class ProductsController extends Controller
      */
     public function destroy($id)
     {
-        $product = products::findOrFail($id); // العثور على المنتج باستخدام الـ ID
-        $product->delete(); // حذف المنتج
-
+        $this->productService->delete($id);
         return response()->json([
             'status' => 'success',
             'message' => 'تم حذف المنتج بنجاح',

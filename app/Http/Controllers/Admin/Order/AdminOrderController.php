@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Admin;
+namespace App\Http\Controllers\Admin\Order;
 
 use App\Http\Resources\Admin\Order\AdminOrderResource;
 use App\Interfaces\Admin\Order\AdminOrderInterface;

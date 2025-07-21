@@ -1,6 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Admin\Store;
+
+use App\Http\Controllers\Controller;
 
 use App\Models\carouselImages;
 use App\Models\images;
@@ -13,42 +15,32 @@ class CarouselImagesController extends Controller
      */
     public function index()
     {
-        // افترض أن لديك جدول `carousel_images` أو ما شابه
-        $images = carouselImages::whereNull('belongs_to')->get();  // جلب جميع الصور
+        $images = carouselImages::whereNull('belongs_to')->get();
         return response()->json(['image_paths' => $images], 200);
     }
 
-    /**
-     * Store multiple images.
-     */
-
     public function store(Request $request)
     {
-        // 🔹 تحقق من صحة البيانات
         $request->validate([
-            'images' => 'required|array', 
-            // 'images.*' => 'mimes:jpeg,png,jpg,gif,svg,avif', // تحقق من نوع وحجم كل صورة
-            'type' => 'required|in:adv,banner,carousel', // تحقق من أن النوع ينتمي إلى القيم المسموح بها
+            'images' => 'required|array',
+            'type' => 'required|in:adv,banner,carousel',
             'belongsTo' => 'nullable|string|max:255',
         ]);
 
-        // 🔹 تحديد المجلد الذي سيتم تخزين الصور فيه
-        $imageFolder = 'carousel_images';  // هذا المجلد يجب أن يكون داخل `storage/app/public`
+        $imageFolder = 'carousel_images';
 
-        // 🔹 حفظ الصور في المجلد `storage/app/public/carousel_images`
         $imagePaths = [];
         foreach ($request->file('images') as $image) {
-            // استخدام اسم الصورة الأصلي فقط
             $imageName = $image->getClientOriginalName();
 
             $path = $image->storeAs("$imageFolder", $imageName);
 
-            $imagePaths[] = $imageName;  // حفظ اسم الصورة فقط في قاعدة البيانات
+            $imagePaths[] = $imageName; 
         }
 
         foreach ($imagePaths as $imageName) {
             carouselImages::create([
-                'image_path' => $imageName,  // حفظ اسم الصورة فقط في قاعدة البيانات
+                'image_path' => $imageName,
                 'type' => $request->type,
                 'belongsTo' => $request->belongsTo,
             ]);
@@ -57,9 +49,6 @@ class CarouselImagesController extends Controller
         return response()->json(['message' => 'تم رفع الصور بنجاح!', 'image_paths' => $imagePaths], 200);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy($id)
     {
         // العثور على الصورة من خلال الـ ID

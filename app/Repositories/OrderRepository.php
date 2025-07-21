@@ -1,11 +1,12 @@
 <?php
 
+// unused Repo ***********************
 namespace App\Repositories;
 
 use App\Interfaces\OrderRepositoryInterface;
 use App\Models\OrderTest;
 
-class OrderRepository implements OrderRepositoryInterface
+class OrderRepository
 {
     public function getAllOrders()
     {

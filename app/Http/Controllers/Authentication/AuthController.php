@@ -50,8 +50,10 @@ class AuthController extends Controller
     }
     public function requestOtp(SignupRequest $request)
     {
-        Log::info('request start');
         $data = $request->validated();
+
+        $this->userRegisteredService->checkEmailOrFail($data['email']);
+        // 
         $key = 'otp:' . $data['email'];
         $rateLimitResponse = RateLimitHelper::checkAndHit($key, 3, 60);
         if ($rateLimitResponse) {

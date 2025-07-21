@@ -1,11 +1,11 @@
 <?php
 
+use App\Http\Controllers\Admin\Store\CarouselImagesController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Authentication\AuthController;
-use App\Http\Controllers\CarouselImagesController;
-use App\Http\Controllers\CategoriesController;
-use App\Http\Controllers\CouponController;
-use App\Http\Controllers\ProductsController;
+use App\Http\Controllers\Admin\Store\CategoriesController;
+use App\Http\Controllers\Admin\Store\CouponController;
+use App\Http\Controllers\Admin\Store\ProductsController;
 use App\Http\Controllers\User\ProfileController;
 use App\Http\Controllers\Order\OrderController as UserOrderController;
 use App\Http\Controllers\Admin\AdminOrderController;
@@ -16,6 +16,8 @@ use App\Http\Controllers\Admin\AdminOrderController;
 |--------------------------------------------------------------------------
 */
 
+// Route::post('signup', [AuthController::class, 'requestOtp']);
+// 
 Route::controller(AuthController::class)->group(function () {
     Route::post('/login', 'login');
     Route::post('/signup', 'requestOtp');
@@ -103,7 +105,7 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'isAdmin'])->group(function 
     Route::prefix('coupons')->controller(CouponController::class)->group(function () {
         Route::get('/index', 'index');
         Route::post('/store', 'store');
-        Route::put('/update/{id}', 'update');
+        Route::put('/update/{coupon}', 'update');
         Route::delete('/delete/{id}', 'destroy');
         Route::patch('/toggle/{id}', 'toggle');
     });
