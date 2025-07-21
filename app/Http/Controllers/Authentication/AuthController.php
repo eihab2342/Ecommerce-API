@@ -2,83 +2,62 @@
 
 namespace App\Http\Controllers\Authentication;
 
-use App\Events\Auth\UserRegistered;
 use App\Helpers\RateLimitHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\SignupRequest;
 use App\Http\Resources\User\UserResource;
 use App\Interfaces\Auth\UserRepoInterface;
 use App\Jobs\Auth\RequestOtp;
-use App\Mail\OtpMail;
 use App\Models\User;
-use Auth;
+use App\Services\Auth\UserRegisteredService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
 
 class AuthController extends Controller
 {
 
-    public function __construct(protected UserRepoInterface $userRepoInterface) {}
-    
+    public function __construct(protected UserRegisteredService $userRegisteredService) {}
+
+
     public function login(Request $request)
     {
-        //     // التحقق من البيانات المدخلة
         $credentials = $request->validate([
             'email' => 'required|email',
             'password' => 'required|min:6',
         ]);
 
-        //     // التحقق من وجود المستخدم
-        //     $user = User::where('email', $request->email)->first();
+        $user = $this->userRegisteredService->findByEmail($credentials['email']);
 
-        //     if (!$user || !Hash::check($request->password, $user->password)) {
-        //         return response()->json([
-        //             'success' => false,
-        //             'message' => 'Invalid credentials.',
-        //         ], 401); // Unauthorized
-        //     }
+        $user = User::where('email', $credentials['email'])->first();
 
-        //     // إنشاء التوكن
-        //     $token = $user->createToken('YourAppName')->plainTextToken;
-
-        //     return [
-        //         'success' => true,
-        //         'message' => 'Login successful',
-        //         'user' => new UserResource($user),
-        //         'token' => $token,
-        //     ];
-        // }
-
-
-
-        if (Auth::attempt($credentials)) {
-            $user = Auth::user();
-            $token = $user->createToken('auth_token')->plainTextToken;
-
+        if (!$user || !Hash::check($credentials['password'], $user->password)) {
             return response()->json([
-                'success' => true,
-                'message' => 'Login successful',
-                'user' => $user,
-                'token' => $token,
-            ]);
+                'success' => false,
+                'message' => 'Invalid credentials.',
+            ], 401);
         }
 
+        $token = $user->createToken('auth_token')->plainTextToken;
+
         return response()->json([
-            'success' => false,
-            'message' => 'Invalid credentials',
-        ], 401);
+            'success' => true,
+            'message' => 'Login successful.',
+            'user' => $user,
+            'token' => $token,
+        ]);
     }
     public function requestOtp(SignupRequest $request)
     {
+        Log::info('request start');
         $data = $request->validated();
         $key = 'otp:' . $data['email'];
         $rateLimitResponse = RateLimitHelper::checkAndHit($key, 3, 60);
         if ($rateLimitResponse) {
             return $rateLimitResponse;
         }
-        
+
         $otp = rand(100000, 999999);
         $expiration = now()->addMinutes(4);
 
@@ -92,6 +71,7 @@ class AuthController extends Controller
         ], $expiration);
 
         dispatch(new RequestOtp($data['email'], $otp));
+        Log::info('request start AND Otp sent');
 
         return response()->json([
             'success' => true,
@@ -135,7 +115,7 @@ class AuthController extends Controller
             ], 409);
         }
 
-        $user = $this->userRepoInterface->create($cachedUserData);
+        $user = $this->userRegisteredService->create($cachedUserData);
 
         Cache()->forget('otp_' . $email);
         Cache()->forget('user_data_' . $email);

@@ -6,6 +6,11 @@ use App\Interfaces\Auth\UserRepoInterface;
 use App\Models\User;
 
 class UserRepository implements UserRepoInterface{
+
+    public function findByEmail(string $email): ?User
+    {
+        return User::where('email', $email)->first();
+    }
     public function create(array $data){
         return User::create($data);
     }

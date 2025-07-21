@@ -7,8 +7,8 @@ use App\Models\Order;
 
 class OrderRepository implements OrderInterface
 {
-    public function getOrders()
-    {
+
+    public function getOrders(){
         return Order::with('items')->get();
     }
 

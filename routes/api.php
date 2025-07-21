@@ -5,10 +5,9 @@ use App\Http\Controllers\Authentication\AuthController;
 use App\Http\Controllers\CarouselImagesController;
 use App\Http\Controllers\CategoriesController;
 use App\Http\Controllers\CouponController;
-use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductsController;
 use App\Http\Controllers\User\ProfileController;
-use App\Http\Controllers\User\UserOrderController;
+use App\Http\Controllers\Order\OrderController as UserOrderController;
 use App\Http\Controllers\Admin\AdminOrderController;
 
 /*
@@ -19,7 +18,7 @@ use App\Http\Controllers\Admin\AdminOrderController;
 
 Route::controller(AuthController::class)->group(function () {
     Route::post('/login', 'login');
-    Route::post('/sign-up', 'requestOtp');
+    Route::post('/signup', 'requestOtp');
     Route::post('/verify-otp', 'verifyOtp');
 });
 

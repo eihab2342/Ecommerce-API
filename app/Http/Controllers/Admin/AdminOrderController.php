@@ -42,9 +42,6 @@ class AdminOrderController extends BaseController
         return AdminOrderResource::collection($orders);
     }
 
-    /**
-     * حساب الإيرادات الإجمالية للطلبات المكتملة
-     */
     public function getRevenue()
     {
         $revenue = $this->orderService->getRevenue();
