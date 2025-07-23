@@ -8,7 +8,7 @@ use App\Http\Controllers\Admin\Store\CouponController;
 use App\Http\Controllers\Admin\Store\ProductsController;
 use App\Http\Controllers\User\ProfileController;
 use App\Http\Controllers\Order\OrderController as UserOrderController;
-use App\Http\Controllers\Admin\AdminOrderController;
+use App\Http\Controllers\Admin\Order\AdminOrderController;
 
 /*
 |--------------------------------------------------------------------------

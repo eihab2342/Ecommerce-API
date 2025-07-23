@@ -17,10 +17,6 @@ class ProfileController extends Controller
 
     public function showProfile()
     {
-        // $user = Auth::user(); 
-
-        // $user = auth('sanctum')->user();
-
         $user = $this->profileInterface->getUser();
 
         if (!$user) {
@@ -33,20 +29,12 @@ class ProfileController extends Controller
 
     public function updateProfile(ProfileUpdateRequest $request)
     {
-
-        // $user = $this->profileInterface->getUser();
         $data = $request->only([
             'name',
             'email',
             'password',
             'phone_number',
         ]);
-
-        // if ($request->filled('password')) {
-        //     $data['password'] = bcrypt($request->password);
-        // }
-
-        // $user->update($data);
 
         $this->profileInterface->update($data);
 

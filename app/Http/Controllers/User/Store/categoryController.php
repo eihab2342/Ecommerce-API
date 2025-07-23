@@ -9,7 +9,7 @@ namespace App\Http\Controllers\User\Store;
 use App\Http\Controllers\Controller;
 use App\Models\categories;
 
-class CategoryContro extends Controller
+class CategoryController extends Controller
 {
 
     public function categories()

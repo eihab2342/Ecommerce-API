@@ -20,8 +20,6 @@ class UserRegisteredService
             throw new HttpException(409,'User already registered with this email.');
         }
     }
-
-
     public function findByEmail(string $email): ?User
     {
         return $this->userRepo->findByEmail($email);

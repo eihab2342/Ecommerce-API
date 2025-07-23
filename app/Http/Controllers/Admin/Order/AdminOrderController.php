@@ -3,9 +3,7 @@
 namespace App\Http\Controllers\Admin\Order;
 
 use App\Http\Resources\Admin\Order\AdminOrderResource;
-use App\Interfaces\Admin\Order\AdminOrderInterface;
 use Illuminate\Http\Request;
-use App\Models\Order;
 use App\Services\Admin\Order\OrderService;
 use Illuminate\Routing\Controller as BaseController;
 
@@ -15,10 +13,6 @@ class AdminOrderController extends BaseController
     {
         $this->middleware('auth:sanctum');
     }
-
-    /**
-     * عرض كل الطلبات
-     */
     public function index()
     {
         $orders = $this->orderService->index();
@@ -29,10 +23,6 @@ class AdminOrderController extends BaseController
 
         return AdminOrderResource::collection($orders);
     }
-
-    /**
-     * عرض الطلبات المعلقة
-     */
     public function getPendingOrders()
     {
         $orders = $this->orderService->getPendingOrders();
@@ -41,16 +31,11 @@ class AdminOrderController extends BaseController
         }
         return AdminOrderResource::collection($orders);
     }
-
     public function getRevenue()
     {
         $revenue = $this->orderService->getRevenue();
         return response()->json(['revenue' => $revenue]);
     }
-
-    /**
-     * تحديث حالة الطلب
-     */
     public function updateStatus(Request $request, $orderId)
     {
         $request->validate([

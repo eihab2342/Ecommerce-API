@@ -27,6 +27,11 @@ class AuthController extends Controller
             'email' => 'required|email',
             'password' => 'required|min:6',
         ]);
+        $key = 'login:' . $credentials['email'];
+        $rateLimitResponse = RateLimitHelper::checkAndHit($key, 3, 60);
+        if ($rateLimitResponse) {
+            return $rateLimitResponse;
+        }
 
         $user = $this->userRegisteredService->findByEmail($credentials['email']);
 
